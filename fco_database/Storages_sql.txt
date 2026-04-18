@@ -1,0 +1,69 @@
+CREATE TABLE traits (
+  traitId VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100),
+  description TEXT
+);
+
+CREATE TABLE card_traits (
+  uid VARCHAR(100) NOT NULL,
+  traitId VARCHAR(100) NOT NULL,
+  PRIMARY KEY (uid, traitId)
+);
+
+CREATE TABLE card_positions (
+  uid VARCHAR(100) NOT NULL,
+  positionCode VARCHAR(20) NOT NULL,
+  PRIMARY KEY (uid, positionCode)
+);
+
+CREATE TABLE player_metadata (
+  dataId VARCHAR(50) PRIMARY KEY,
+  name VARCHAR(100),
+  nation VARCHAR(100),
+  birthDate DATE,
+  info TEXT
+);
+
+CREATE TABLE season_cards (
+  dataId VARCHAR(50),
+  uid VARCHAR(100) PRIMARY KEY,
+  season VARCHAR(50) NOT NULL,
+  salary INT,
+  foot VARCHAR(20) CHECK (foot IN ('left','right')),
+  weak_foot INT,
+  reputation VARCHAR(50),
+  workrate_att VARCHAR(20),
+  workrate_def VARCHAR(20),
+  ovr INT,
+  st INT,
+  rw INT,
+  cf INT,
+  cam INT,
+  rm INT,
+  cm INT,
+  cdm INT,
+  rwb INT,
+  rb INT,
+  cb INT,
+  gk INT
+);
+
+ALTER TABLE season_cards
+ADD CONSTRAINT fk_season_cards_dataId
+FOREIGN KEY (dataId)
+REFERENCES player_metadata(dataId);
+
+ALTER TABLE card_traits
+ADD CONSTRAINT fk_card_traits_uid
+FOREIGN KEY (uid)
+REFERENCES season_cards(uid);
+
+ALTER TABLE card_traits
+ADD CONSTRAINT fk_card_traits_traitId
+FOREIGN KEY (traitId)
+REFERENCES traits(traitId);
+
+ALTER TABLE card_positions
+ADD CONSTRAINT fk_card_positions_uid
+FOREIGN KEY (uid)
+REFERENCES season_cards(uid);

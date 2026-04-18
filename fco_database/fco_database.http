@@ -1,0 +1,6 @@
+@fco_database_HostAddress = http://localhost:5211
+
+GET {{fco_database_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

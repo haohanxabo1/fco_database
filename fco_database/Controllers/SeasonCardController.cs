@@ -45,7 +45,7 @@ namespace fco_database.Controllers
                 if (exists) return Conflict();
                 await _dbContext.AddAsync(iCard);
                 await _dbContext.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetCard), new { id = iCard.Uid });
+                return CreatedAtAction(nameof(GetCard), new { id = iCard.Uid },iCard);
             }
             catch
             {
@@ -70,7 +70,7 @@ namespace fco_database.Controllers
         {
             SeasonCardModel? foundCard = await _dbContext.season_cards.FirstOrDefaultAsync(x => x.Uid == id);
             if (foundCard == null) return NotFound();
-            if (idata.IsActive != 0 || idata.IsActive != 1) return NoContent(); // 0 or 1
+            if (idata.IsActive != 0 && idata.IsActive != 1) return NoContent(); // 0 or 1
 
             if (idata.Salary != null) foundCard.Salary = idata.Salary.Value;
             if (idata.IsActive != null) foundCard.IsActive = idata.IsActive.Value;
@@ -147,7 +147,7 @@ namespace fco_database.Controllers
         public ActionResult <IEnumerable<SeasonCardModel> >SelectionCards(int page = 1, int pageSize = 5)
         {
             IEnumerable<SeasonCardModel> selectedCards =
-                _dbContext.season_cards.Skip(page * pageSize - pageSize).Take(pageSize);
+                _dbContext.season_cards.Where(x => x.IsActive == 1).Skip(page * pageSize - pageSize).Take(pageSize);
 
             return Ok(selectedCards);
 
@@ -157,7 +157,7 @@ namespace fco_database.Controllers
         public ActionResult<IEnumerable<SeasonCardModel>> SelectTop(int count)
         {
             IEnumerable<SeasonCardModel> selectedCards =
-                _dbContext.season_cards.OrderByDescending(c => c.Ovr).Take(count);
+                _dbContext.season_cards.Where(x => x.IsActive == 1).OrderByDescending(c => c.Ovr).Take(count);
 
             return Ok(selectedCards);
         }

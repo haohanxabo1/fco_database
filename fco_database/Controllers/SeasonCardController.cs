@@ -19,13 +19,13 @@ namespace fco_database.Controllers
         }
         
         
-        [HttpGet]
-        public ActionResult<IEnumerable<SeasonCardModel>> GetCards()
-        {
-            IEnumerable<SeasonCardModel> seasonCards =  _dbContext.season_cards.Where(x => x.IsActive == 1);
-            // if (!seasonCards.Any()) return NotFound();
-            return Ok(seasonCards);
-        }
+        // [HttpGet]
+        // public ActionResult<IEnumerable<SeasonCardModel>> GetCards()
+        // {
+        //     IEnumerable<SeasonCardModel> seasonCards =  _dbContext.season_cards.Where(x => x.IsActive == 1);
+        //     // if (!seasonCards.Any()) return NotFound();
+        //     return Ok(seasonCards);
+        // }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<SeasonCardModel>> GetCard(string id)
@@ -41,6 +41,8 @@ namespace fco_database.Controllers
         {
             try
             {
+                bool exists = await _dbContext.season_cards.AnyAsync(x => x.Uid == iCard.Uid);
+                if (exists) return Conflict();
                 await _dbContext.AddAsync(iCard);
                 await _dbContext.SaveChangesAsync();
                 return CreatedAtAction(nameof(GetCard), new { id = iCard.Uid });
@@ -94,7 +96,7 @@ namespace fco_database.Controllers
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<SeasonCardModel>>> SearchCards(string? foot,int? minOvr,string? season)
         {
-            var fquery = _dbContext.season_cards.AsQueryable();
+            var fquery = _dbContext.season_cards.Where(c => c.IsActive == 1).AsQueryable();
 
             if (foot != null) fquery = fquery.Where(c => c.Foot == foot);
             if (minOvr != null) fquery = fquery.Where(c => c.Ovr >= minOvr);
@@ -103,5 +105,66 @@ namespace fco_database.Controllers
             var result = await fquery.ToListAsync();
             return Ok(result);
         }
+        
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<SeasonCardModel>>> CombineCardsType(string? sortBy, bool desc = false)
+        {
+             
+            var cardsQuery = _dbContext.season_cards.Where(c => c.IsActive == 1).AsQueryable();
+
+            if (sortBy is not null)
+            {
+                if (sortBy.ToLower() == "salary")
+                {
+                    cardsQuery =
+                        desc
+                            ? cardsQuery.OrderByDescending(c => c.Salary)
+                            : cardsQuery.OrderBy(c => c.Salary);
+                }
+                else if (sortBy.ToLower() == "ovr")
+                {
+                    cardsQuery =
+                        desc
+                            ? cardsQuery.OrderByDescending(c => c.Ovr)
+                            : cardsQuery.OrderBy(c => c.Ovr);
+                }
+                else if (sortBy.ToLower() == "season")
+                {
+                    cardsQuery =
+                        desc
+                            ? cardsQuery.OrderByDescending(c => c.Season)
+                            : cardsQuery.OrderBy(c => c.Season);
+                }
+
+                var result = await cardsQuery.ToListAsync();
+                return Ok(result);
+            }
+
+            var result2 = await cardsQuery.ToListAsync();
+            return Ok(result2);
+
+        }
+
+        [HttpGet("paging")]
+        public ActionResult <IEnumerable<SeasonCardModel> >SelectionCards(int page = 1, int pageSize = 5)
+        {
+            IEnumerable<SeasonCardModel> selectedCards =
+                _dbContext.season_cards.Skip(page * pageSize - pageSize).Take(pageSize);
+
+            return Ok(selectedCards);
+
+        }
+
+        [HttpGet("top")]
+        public ActionResult<IEnumerable<SeasonCardModel>> SelectTop(int count)
+        {
+            IEnumerable<SeasonCardModel> selectedCards =
+                _dbContext.season_cards.OrderByDescending(c => c.Ovr).Take(count);
+
+            return Ok(selectedCards);
+        }
+
+
+
     }
 }

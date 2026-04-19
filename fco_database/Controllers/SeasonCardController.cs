@@ -20,9 +20,9 @@ namespace fco_database.Controllers
         
         
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SeasonCardModel>>> GetCards()
+        public ActionResult<IEnumerable<SeasonCardModel>> GetCards()
         {
-            IEnumerable<SeasonCardModel> seasonCards = await _dbContext.season_cards.Where(x => x.IsActive == 1).ToListAsync();
+            IEnumerable<SeasonCardModel> seasonCards =  _dbContext.season_cards.Where(x => x.IsActive == 1);
             // if (!seasonCards.Any()) return NotFound();
             return Ok(seasonCards);
         }
@@ -63,10 +63,45 @@ namespace fco_database.Controllers
             return NoContent();
         }
 
-        [HttpGet("GetNumberOfCards")]
-        public int GetNumberCards()
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutCard(string id,[FromBody] SeasonCardDTO idata)
+        {
+            SeasonCardModel? foundCard = await _dbContext.season_cards.FirstOrDefaultAsync(x => x.Uid == id);
+            if (foundCard == null) return NotFound();
+            if (idata.IsActive != 0 || idata.IsActive != 1) return NoContent(); // 0 or 1
+
+            if (idata.Salary != null) foundCard.Salary = idata.Salary.Value;
+            if (idata.IsActive != null) foundCard.IsActive = idata.IsActive.Value;
+ 
+            await _dbContext.SaveChangesAsync();
+            return Ok();
+
+        }
+
+        [HttpGet("total")]
+        public int TotalNumberCards()
         {
             return _dbContext.season_cards.Where(x => x.IsActive == 1).Count();
+        }
+
+        [HttpGet("inactive")]
+        public ActionResult<IEnumerable<SeasonCardModel>> InactiveCards()
+        {
+            IEnumerable<SeasonCardModel> inactiveCards = _dbContext.season_cards.Where(x => x.IsActive == 0);
+            return Ok(inactiveCards);   
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<SeasonCardModel>>> SearchCards(string? foot,int? minOvr,string? season)
+        {
+            var fquery = _dbContext.season_cards.AsQueryable();
+
+            if (foot != null) fquery = fquery.Where(c => c.Foot == foot);
+            if (minOvr != null) fquery = fquery.Where(c => c.Ovr >= minOvr);
+            if (season != null) fquery = fquery.Where(c => c.Season == season);
+
+            var result = await fquery.ToListAsync();
+            return Ok(result);
         }
     }
 }

@@ -136,12 +136,10 @@ namespace fco_database.Controllers
                             : cardsQuery.OrderBy(c => c.Season);
                 }
 
-                var result = await cardsQuery.ToListAsync();
-                return Ok(result);
             }
 
-            var result2 = await cardsQuery.ToListAsync();
-            return Ok(result2);
+            var result = await cardsQuery.ToListAsync();
+            return Ok(result);
 
         }
 
